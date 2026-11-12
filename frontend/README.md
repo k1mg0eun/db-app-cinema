@@ -98,6 +98,7 @@ VITE_API_BASE_URL=http://localhost:8080
 ```json
 [{
   "reservation_id": 622,
+  "reservation_status": "CONFIRMED",
   "reserved_at": "...",
   "total_price": 36000,
   "schedule": { "movie_title": "...", "age_rating": "19", "screen_name": "IMAX관", "start_time": "...", "end_time": "..." },
@@ -107,6 +108,17 @@ VITE_API_BASE_URL=http://localhost:8080
 
 `total_price`는 저장하지 않는 유도 속성이므로 백엔드에서 `SUM(ticket.price)`로 계산해서 내려주는 것을 제안합니다.
 
+`reservation_status`는 `CONFIRMED` / `CANCELLED`입니다. 취소된 예매도 목록에 포함해서 내려 주면 화면에 "취소됨"으로 표시합니다.
+
+### `POST /reservations/{id}/cancel`: 예매 취소
+
+본문 없이 보냅니다. 새 DDL에 맞춰 행을 지우지 않고 상태만 바꿉니다.
+
+- `reservations.reservation_status` → `CANCELLED`
+- 해당 예매의 `tickets.ticket_status` → `CANCELLED` (그러면 `active_seat_id`가 NULL이 되어 같은 좌석을 다시 예매할 수 있음)
+- 응답 200: 취소된 예매 1건 (위 목록의 한 항목과 같은 모양)
+- 본인 예매만, 상영 시작 전까지만 취소 가능
+
 ### 에러 응답 (안)
 
 모든 에러는 `{ "code": "...", "message": "사용자에게 보여줄 문장" }` 형태로 보내 주세요. 프론트는 `message`를 그대로 화면에 띄웁니다.
@@ -115,7 +127,8 @@ VITE_API_BASE_URL=http://localhost:8080
 | --- | --- | --- | --- |
 | 이미 예매된 좌석 (ticket UNIQUE 위반) | 409 | `SEAT_ALREADY_RESERVED` | `seat_ids`: 겹친 좌석 번호 배열 |
 | 관람 연령 미달 | 403 | `AGE_RESTRICTED` | |
-| 상영이 이미 시작된 회차 | 400 | `SCHEDULE_STARTED` | |
+| 상영이 이미 시작된 회차 (예매·취소 모두) | 400 | `SCHEDULE_STARTED` | |
+| 이미 취소된 예매를 다시 취소 | 409 | `ALREADY_CANCELLED` | |
 | 로그인 필요 / 토큰 만료 | 401 | `UNAUTHORIZED` | |
 
 409를 받으면 프론트는 결제 창을 닫고, 좌석 현황을 다시 불러오고, 겹친 좌석을 선택에서 빼고 안내 문구를 띄웁니다.
@@ -124,5 +137,4 @@ VITE_API_BASE_URL=http://localhost:8080
 
 - 연령 제한은 프론트에서 막고 있습니다(상영일 기준 만 나이 ≥ 등급 숫자). 백엔드에서도 한 번 더 검사하면 위 403 형식으로 응답하면 됩니다. 목업은 두 곳 모두 검사합니다.
 - 19등급을 "만 19세 이상"으로 계산하고 있습니다. 청소년보호법 기준(연 나이 19세)으로 바꿀지 정해야 합니다.
-- 예매 취소: ERD에는 취소(예매 행 삭제)가 있지만 회의록 API 표에는 없어서 화면에 넣지 않았습니다.
 - 영화 3편의 제목·포스터는 임시입니다. 확정되면 목업 데이터(`src/api/mockData.js`)를 바꾸면 됩니다.

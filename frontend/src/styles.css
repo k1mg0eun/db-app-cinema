@@ -1195,3 +1195,55 @@ table {
     animation: none !important;
   }
 }
+
+/* ---------- 예매 취소 ---------- */
+.btn-danger {
+  background: #c62f35;
+  color: #fff;
+}
+
+.btn-danger:not(:disabled):hover {
+  background: #a3232a;
+}
+
+.notice-done {
+  background: var(--gray-50);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.resv-cancel {
+  margin-top: 10px;
+  justify-self: end;
+}
+
+.status-tag {
+  margin-left: 8px;
+  padding: 0 6px;
+  border: 1px solid #c62f35;
+  border-radius: 3px;
+  color: #c62f35;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.resv-cancelled .poster-thumb {
+  opacity: 0.4;
+}
+
+.resv-cancelled .resv-title,
+.resv-cancelled .info-table td {
+  color: var(--sub);
+}
+
+.resv-cancelled .resv-price strong {
+  color: var(--sub);
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+@media (max-width: 760px) {
+  .resv-cancel {
+    margin-top: 0;
+  }
+}

@@ -30,6 +30,10 @@ function persist(data = db) {
   }
 }
 
+// 새 DDL: 예매·티켓은 지우지 않고 CANCELLED 상태로 남긴다. (예전 저장본은 상태값이 없으면 유효로 본다)
+const isActiveTicket = (t) => t.ticket_status !== 'CANCELLED';
+const statusOf = (r) => r.reservation_status ?? 'CONFIRMED';
+
 const delay = () => new Promise((r) => setTimeout(r, LATENCY));
 const fail = (status, code, message, extra) => {
   throw new ApiError(status, code, message, { code, message, ...extra });
@@ -70,6 +74,7 @@ function reservationView(r) {
     .sort((a, b) => a.seat_row.localeCompare(b.seat_row) || a.seat_col - b.seat_col);
   return {
     reservation_id: r.reservation_id,
+    reservation_status: statusOf(r),
     reserved_at: r.reserved_at,
     total_price: tickets.reduce((sum, t) => sum + t.price, 0),
     schedule,
@@ -99,7 +104,9 @@ const routes = [
   ['GET', /^\/schedules\/(\d+)\/seats$/, ([id]) => {
     const s = db.schedules.find((x) => x.schedule_id === Number(id));
     if (!s) fail(404, ERROR.NOT_FOUND, '상영회차를 찾을 수 없습니다.');
-    const reserved = new Set(db.tickets.filter((t) => t.schedule_id === s.schedule_id).map((t) => t.seat_id));
+    const reserved = new Set(
+      db.tickets.filter((t) => t.schedule_id === s.schedule_id && isActiveTicket(t)).map((t) => t.seat_id),
+    );
     return {
       schedule: scheduleView(s),
       seats: db.seats
@@ -120,8 +127,10 @@ const routes = [
     if (seatIds.some((id) => !db.seats.find((x) => x.seat_id === id && x.screen_id === s.screen_id))) {
       fail(400, 'BAD_REQUEST', '이 상영관에 없는 좌석입니다.');
     }
-    // (schedule_id, seat_id) UNIQUE 제약 흉내: 하나라도 겹치면 전체 실패
-    const conflicts = db.tickets.filter((t) => t.schedule_id === s.schedule_id && seatIds.includes(t.seat_id));
+    // (screening_id, active_seat_id) UNIQUE 제약 흉내: 유효한 티켓과 하나라도 겹치면 전체 실패
+    const conflicts = db.tickets.filter(
+      (t) => t.schedule_id === s.schedule_id && isActiveTicket(t) && seatIds.includes(t.seat_id),
+    );
     if (conflicts.length) {
       fail(409, ERROR.SEAT_ALREADY_RESERVED, '이미 예매된 좌석이 포함되어 있습니다.', {
         seat_ids: conflicts.map((t) => t.seat_id),
@@ -132,10 +141,34 @@ const routes = [
       member_id: member.member_id,
       schedule_id: s.schedule_id,
       reserved_at: toLocalDateTimeString(new Date()),
+      reservation_status: 'CONFIRMED',
     };
     db.reservations.push(r);
     for (const seatId of seatIds) {
-      db.tickets.push({ ticket_id: db.nextId.ticket++, reservation_id: r.reservation_id, schedule_id: s.schedule_id, seat_id: seatId, price: s.price });
+      db.tickets.push({
+        ticket_id: db.nextId.ticket++,
+        reservation_id: r.reservation_id,
+        schedule_id: s.schedule_id,
+        seat_id: seatId,
+        price: s.price,
+        ticket_status: 'ACTIVE',
+      });
+    }
+    persist();
+    return reservationView(r);
+  }],
+  ['POST', /^\/reservations\/(\d+)\/cancel$/, ([id], _, token) => {
+    const member = currentMember(token);
+    const r = db.reservations.find((x) => x.reservation_id === Number(id));
+    if (!r || r.member_id !== member.member_id) fail(404, ERROR.NOT_FOUND, '예매 내역을 찾을 수 없습니다.');
+    if (statusOf(r) === 'CANCELLED') fail(409, ERROR.ALREADY_CANCELLED, '이미 취소된 예매입니다.');
+    const s = db.schedules.find((x) => x.schedule_id === r.schedule_id);
+    if (parseDateTime(s.start_time) <= new Date()) {
+      fail(400, ERROR.SCHEDULE_STARTED, '상영이 시작된 예매는 취소할 수 없습니다.');
+    }
+    r.reservation_status = 'CANCELLED';
+    for (const t of db.tickets) {
+      if (t.reservation_id === r.reservation_id) t.ticket_status = 'CANCELLED';
     }
     persist();
     return reservationView(r);

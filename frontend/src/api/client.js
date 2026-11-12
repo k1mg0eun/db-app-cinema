@@ -50,6 +50,7 @@ export const api = {
   getSeats: (scheduleId) => request('GET', `/schedules/${scheduleId}/seats`),
   createReservation: (schedule_id, seat_ids) => request('POST', '/reservations', { schedule_id, seat_ids }),
   getMyReservations: () => request('GET', '/members/me/reservations'),
+  cancelReservation: (id) => request('POST', `/reservations/${id}/cancel`),
 };
 
 // 목업 전용: "다른 사람이 먼저 예매한" 상황을 재현
