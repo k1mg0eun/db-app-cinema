@@ -2,7 +2,7 @@
 
 10주차 회의록(2026.11.05)의 예매 흐름 화면을 구현한 React + Vite 앱입니다.
 
-로그인 → 영화 목록 → 영화 상세 → 상영회차 선택 → 좌석 선택 → 결제 확인 → 예매 완료 → 마이페이지
+(회원가입 →) 로그인 → 영화 목록 → 영화 상세 → 상영회차 선택 → 좌석 선택 → 결제 확인 → 예매 완료 → 마이페이지
 
 ## 실행
 
@@ -20,8 +20,10 @@ http://localhost:5173 에서 열립니다.
 - 백엔드가 준비되면 `.env.example`을 `.env`로 복사한 뒤 주소를 넣으면 실제 API를 호출합니다.
 
 ```
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:8080/api
 ```
+
+백엔드의 모든 경로는 `/api`로 시작하므로 주소에 `/api`까지 넣습니다. 백엔드 쪽 명세는 `cinema-backend/docs/API.md`에 있습니다.
 
 목업 테스트 계정 (비밀번호 모두 `test1234`)
 
@@ -37,6 +39,7 @@ VITE_API_BASE_URL=http://localhost:8080
 | 화면 | 경로 | 관련 테이블 |
 | --- | --- | --- |
 | 로그인 | `/login` | member |
+| 회원가입 | `/signup` | member |
 | 영화 목록 / 상세 | `/movies`, `/movies/:id` | movie |
 | 상영회차 선택 | `/movies/:id/schedules` | schedule, screen |
 | 좌석 선택 + 결제 창 | `/schedules/:id/seats` | seat, ticket, reservation |
@@ -57,6 +60,18 @@ VITE_API_BASE_URL=http://localhost:8080
 // 200
 { "token": "...", "member": { "member_id": 1, "login_id": "adult01", "name": "김예매", "phone": "010-...", "birth_date": "1999-03-14" } }
 ```
+
+### `POST /auth/signup` → 201
+
+```json
+// 요청
+{ "login_id": "newuser1", "password": "password1234", "name": "홍길동", "phone": "010-1111-2222", "birth_date": "2000-01-01" }
+// 201 — member 객체 (password 제외)
+```
+
+- `login_id`: 영문·숫자·`_` 4~20자, `password`: 8~64자, `phone`: `01012345678` 또는 `010-1234-5678`, `birth_date`: 과거 날짜
+- 아이디·전화번호 중복은 409 `DUPLICATE_LOGIN_ID` / `DUPLICATE_PHONE` → 해당 입력칸 아래에 메시지를 띄웁니다.
+- 가입이 끝나면 로그인 화면으로 이동하고 아이디를 미리 채워 둡니다. (자동 로그인은 하지 않음)
 
 ### `GET /members/me` → member 객체 (위와 같음, password 제외)
 
@@ -98,17 +113,17 @@ VITE_API_BASE_URL=http://localhost:8080
 ```json
 [{
   "reservation_id": 622,
-  "reservation_status": "CONFIRMED",
+  "status": "CONFIRMED",
   "reserved_at": "...",
   "total_price": 36000,
   "schedule": { "movie_title": "...", "age_rating": "19", "screen_name": "IMAX관", "start_time": "...", "end_time": "..." },
-  "tickets": [{ "ticket_id": 1, "seat_id": 1, "seat_row": "A", "seat_col": 1, "price": 18000 }]
+  "tickets": [{ "seat_id": 1, "seat_row": "A", "seat_col": 1, "price": 18000, "status": "ACTIVE" }]
 }]
 ```
 
 `total_price`는 저장하지 않는 유도 속성이므로 백엔드에서 `SUM(ticket.price)`로 계산해서 내려주는 것을 제안합니다.
 
-`reservation_status`는 `CONFIRMED` / `CANCELLED`입니다. 취소된 예매도 목록에 포함해서 내려 주면 화면에 "취소됨"으로 표시합니다.
+`status`는 `CONFIRMED` / `CANCELLED`입니다. 마이페이지에서 `CONFIRMED`는 "예매 완료", `CANCELLED`는 "예매 취소"로 표시하고, 취소된 예매에는 취소 버튼을 보이지 않습니다. (예전 필드명 `reservation_status`도 받습니다)
 
 ### `POST /reservations/{id}/cancel`: 예매 취소
 
@@ -130,6 +145,9 @@ VITE_API_BASE_URL=http://localhost:8080
 | 상영이 이미 시작된 회차 (예매·취소 모두) | 400 | `SCHEDULE_STARTED` | |
 | 이미 취소된 예매를 다시 취소 | 409 | `ALREADY_CANCELLED` | |
 | 로그인 필요 / 토큰 만료 | 401 | `UNAUTHORIZED` | |
+| 아이디·비밀번호 불일치 | 401 | `INVALID_CREDENTIALS` | |
+| 다른 회원의 예매 취소 | 403 | `FORBIDDEN` | |
+| 아이디 / 전화번호 중복 (회원가입) | 409 | `DUPLICATE_LOGIN_ID` / `DUPLICATE_PHONE` | |
 
 409를 받으면 프론트는 결제 창을 닫고, 좌석 현황을 다시 불러오고, 겹친 좌석을 선택에서 빼고 안내 문구를 띄웁니다.
 

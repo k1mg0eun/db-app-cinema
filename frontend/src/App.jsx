@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { RequireAuth } from './auth.jsx';
 import Header from './components/Header.jsx';
 import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
 import MovieList from './pages/MovieList.jsx';
 import MovieDetail from './pages/MovieDetail.jsx';
 import ScheduleSelect from './pages/ScheduleSelect.jsx';
@@ -18,6 +19,7 @@ export default function App() {
       <main className="page">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Navigate to="/movies" replace />} />
           <Route path="/movies" element={guard(<MovieList />)} />
           <Route path="/movies/:movieId" element={guard(<MovieDetail />)} />

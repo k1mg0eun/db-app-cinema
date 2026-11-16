@@ -4,7 +4,11 @@ import RatingBadge from '../components/RatingBadge.jsx';
 
 export const seatsText = (tickets) => tickets.map((t) => `${t.seat_row}${t.seat_col}`).join(', ');
 
-export const isCancelled = (r) => r.reservation_status === 'CANCELLED';
+// 백엔드는 `status`로 내려준다. (예전 목업·문서의 `reservation_status`도 받아 둔다)
+export const statusOf = (r) => r.status ?? r.reservation_status ?? 'CONFIRMED';
+export const isCancelled = (r) => statusOf(r) === 'CANCELLED';
+
+export const STATUS_LABEL = { CONFIRMED: '예매 완료', CANCELLED: '예매 취소' };
 export const canCancel = (r) => !isCancelled(r) && parseDateTime(r.schedule.start_time) > new Date();
 
 // 예매 1건 (좌석이 여러 개여도 한 건으로 묶어서 표시)
@@ -19,7 +23,9 @@ export default function ReservationCard({ reservation, onCancel }) {
       <div className="resv-body">
         <p className="resv-no">
           예매번호 {reservation.reservation_id}
-          {cancelled && <span className="status-tag">취소됨</span>}
+          <span className={`status-tag ${cancelled ? 'status-cancelled' : 'status-confirmed'}`}>
+            {STATUS_LABEL[statusOf(reservation)] ?? statusOf(reservation)}
+          </span>
         </p>
         <h2 className="resv-title">
           <RatingBadge rating={schedule.age_rating} />

@@ -42,6 +42,7 @@ async function request(method, path, body) {
 }
 
 export const api = {
+  signup: (form) => request('POST', '/auth/signup', form),
   login: (login_id, password) => request('POST', '/auth/login', { login_id, password }),
   me: () => request('GET', '/members/me'),
   getMovies: () => request('GET', '/movies'),
