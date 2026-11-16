@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client.js';
+import { ERROR } from '../api/errors.js';
 import { useAuth } from '../auth.jsx';
 import { useAsync } from '../lib/useAsync.js';
 import { formatDate, formatDateTime, formatWon } from '../lib/datetime.js';
 import Modal from '../components/Modal.jsx';
 import { ErrorBox, Loading } from '../components/Status.jsx';
-import ReservationCard, { seatsText } from './ReservationCard.jsx';
+import ReservationCard, { isCancelled, seatsText } from './ReservationCard.jsx';
 
 export default function MyPage() {
   const { member } = useAuth();
@@ -34,6 +35,11 @@ export default function MyPage() {
 
       <h2 className="section-title">
         예매 내역 {list && <span className="count">{list.length}건</span>}
+        {list && list.some(isCancelled) && (
+          <span className="count-sub">
+            예매 완료 {list.filter((r) => !isCancelled(r)).length} · 취소 {list.filter(isCancelled).length}
+          </span>
+        )}
       </h2>
       {done && (
         <p className="notice notice-done" role="status">
@@ -70,6 +76,7 @@ export default function MyPage() {
         <CancelModal
           reservation={target}
           onClose={() => setTarget(null)}
+          onStale={reload}
           onCancelled={(id) => {
             setTarget(null);
             setDone(id);
@@ -81,7 +88,10 @@ export default function MyPage() {
   );
 }
 
-function CancelModal({ reservation, onClose, onCancelled }) {
+// 이미 취소됐거나 상영이 시작돼서 목록이 낡은 경우: 안내만 띄우고 목록을 새로 받는다
+const STALE_CODES = [ERROR.ALREADY_CANCELLED, ERROR.SCHEDULE_STARTED];
+
+function CancelModal({ reservation, onClose, onCancelled, onStale }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const { schedule, tickets } = reservation;
@@ -95,6 +105,7 @@ function CancelModal({ reservation, onClose, onCancelled }) {
     } catch (err) {
       setError(err.message);
       setBusy(false);
+      if (STALE_CODES.includes(err.code)) onStale();
     }
   }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { isMock } from '../api/client.js';
 
@@ -12,7 +12,8 @@ export default function Login() {
   const { member, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ login_id: '', password: '' });
+  const signedUp = location.state?.signedUp; // 회원가입 직후 넘어온 아이디
+  const [form, setForm] = useState({ login_id: signedUp ?? '', password: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -37,6 +38,11 @@ export default function Login() {
     <div className="login">
       <form className="login-form" onSubmit={onSubmit}>
         <h1 className="login-title">로그인</h1>
+        {signedUp && (
+          <p className="notice notice-done" role="status">
+            회원가입이 완료되었습니다. 비밀번호를 입력해 로그인해 주세요.
+          </p>
+        )}
         <label className="field">
           <span>아이디</span>
           <input
@@ -64,6 +70,9 @@ export default function Login() {
         <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={busy}>
           {busy ? '로그인하는 중…' : '로그인'}
         </button>
+        <p className="login-switch">
+          아직 회원이 아니신가요? <Link to="/signup">회원가입</Link>
+        </p>
       </form>
 
       {isMock && (

@@ -69,12 +69,18 @@ function reservationView(r) {
     .filter((t) => t.reservation_id === r.reservation_id)
     .map((t) => {
       const seat = db.seats.find((x) => x.seat_id === t.seat_id);
-      return { ticket_id: t.ticket_id, seat_id: t.seat_id, seat_row: seat.seat_row, seat_col: seat.seat_col, price: t.price };
+      return {
+        seat_id: t.seat_id,
+        seat_row: seat.seat_row,
+        seat_col: seat.seat_col,
+        price: t.price,
+        status: isActiveTicket(t) ? 'ACTIVE' : 'CANCELLED',
+      };
     })
     .sort((a, b) => a.seat_row.localeCompare(b.seat_row) || a.seat_col - b.seat_col);
   return {
     reservation_id: r.reservation_id,
-    reservation_status: statusOf(r),
+    status: statusOf(r), // 백엔드 API.md와 같은 필드명
     reserved_at: r.reserved_at,
     total_price: tickets.reduce((sum, t) => sum + t.price, 0),
     schedule,
@@ -82,10 +88,45 @@ function reservationView(r) {
   };
 }
 
+// 백엔드 POST /api/auth/signup 검증 규칙과 같게 맞춘다.
+const LOGIN_ID_RE = /^[A-Za-z0-9_]{4,20}$/;
+const PHONE_RE = /^010-?\d{4}-?\d{4}$/;
+const normalizePhone = (p) => p.replace(/-/g, '').replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
+
+function signup(body) {
+  const login_id = String(body?.login_id ?? '').trim();
+  const password = String(body?.password ?? '');
+  const name = String(body?.name ?? '').trim();
+  const phone = String(body?.phone ?? '').trim();
+  const birth_date = String(body?.birth_date ?? '');
+  if (!LOGIN_ID_RE.test(login_id)) fail(400, ERROR.VALIDATION_FAILED, '아이디는 영문, 숫자, _ 4~20자로 입력해 주세요.');
+  if (password.length < 8 || password.length > 64) fail(400, ERROR.VALIDATION_FAILED, '비밀번호는 8~64자로 입력해 주세요.');
+  if (!name) fail(400, ERROR.VALIDATION_FAILED, '이름을 입력해 주세요.');
+  if (!PHONE_RE.test(phone)) fail(400, ERROR.VALIDATION_FAILED, '전화번호는 010-1234-5678 형식으로 입력해 주세요.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth_date) || birth_date >= toLocalDateString(new Date())) {
+    fail(400, ERROR.VALIDATION_FAILED, '생년월일을 확인해 주세요.');
+  }
+  const formatted = normalizePhone(phone);
+  if (db.members.some((m) => m.login_id === login_id)) fail(409, ERROR.DUPLICATE_LOGIN_ID, '이미 사용 중인 아이디입니다.');
+  if (db.members.some((m) => m.phone === formatted)) fail(409, ERROR.DUPLICATE_PHONE, '이미 가입된 전화번호입니다.');
+  const m = {
+    member_id: Math.max(...db.members.map((x) => x.member_id)) + 1,
+    login_id,
+    password,
+    name,
+    phone: formatted,
+    birth_date,
+  };
+  db.members.push(m);
+  persist();
+  return publicMember(m);
+}
+
 const routes = [
+  ['POST', /^\/auth\/signup$/, (_, body) => signup(body)],
   ['POST', /^\/auth\/login$/, (_, body) => {
     const m = db.members.find((x) => x.login_id === body?.login_id && x.password && x.password === body?.password);
-    if (!m) fail(401, ERROR.UNAUTHORIZED, '아이디 또는 비밀번호가 맞지 않습니다.');
+    if (!m) fail(401, ERROR.INVALID_CREDENTIALS, '아이디 또는 비밀번호가 맞지 않습니다.');
     return { token: `mock-token-${m.member_id}`, member: publicMember(m) };
   }],
   ['GET', /^\/members\/me$/, (_, __, token) => publicMember(currentMember(token))],
@@ -160,7 +201,8 @@ const routes = [
   ['POST', /^\/reservations\/(\d+)\/cancel$/, ([id], _, token) => {
     const member = currentMember(token);
     const r = db.reservations.find((x) => x.reservation_id === Number(id));
-    if (!r || r.member_id !== member.member_id) fail(404, ERROR.NOT_FOUND, '예매 내역을 찾을 수 없습니다.');
+    if (!r) fail(404, ERROR.NOT_FOUND, '예매 내역을 찾을 수 없습니다.');
+    if (r.member_id !== member.member_id) fail(403, ERROR.FORBIDDEN, '본인의 예매만 취소할 수 있습니다.');
     if (statusOf(r) === 'CANCELLED') fail(409, ERROR.ALREADY_CANCELLED, '이미 취소된 예매입니다.');
     const s = db.schedules.find((x) => x.schedule_id === r.schedule_id);
     if (parseDateTime(s.start_time) <= new Date()) {

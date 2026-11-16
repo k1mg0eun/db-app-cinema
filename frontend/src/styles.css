@@ -386,6 +386,29 @@ table {
   font-size: 0.88rem;
 }
 
+.field-error {
+  color: #a51c22;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.field input[aria-invalid='true'] {
+  border-color: #c62f35;
+}
+
+.login-switch {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--sub);
+}
+
+.login-switch a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .test-accounts {
   margin-top: 28px;
   padding: 14px 16px;
@@ -1220,11 +1243,25 @@ table {
 .status-tag {
   margin-left: 8px;
   padding: 0 6px;
-  border: 1px solid #c62f35;
+  border: 1px solid;
   border-radius: 3px;
-  color: #c62f35;
   font-size: 0.72rem;
   font-weight: 700;
+}
+
+.status-confirmed {
+  color: var(--primary);
+}
+
+.status-cancelled {
+  color: #c62f35;
+}
+
+.count-sub {
+  margin-left: 8px;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--sub);
 }
 
 .resv-cancelled .poster-thumb {
