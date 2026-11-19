@@ -5,7 +5,7 @@ import { buildSeed } from './mockData.js';
 import { checkAge } from '../lib/age.js';
 import { parseDateTime, toLocalDateString, toLocalDateTimeString } from '../lib/datetime.js';
 
-const STORE_KEY = 'cinema.mock.v2';
+const STORE_KEY = 'cinema.mock.v3'; // v3: 관람등급 19 → 18
 const LATENCY = 250;
 
 let db = load();

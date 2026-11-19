@@ -1,6 +1,6 @@
 import { parseDate, parseDateTime } from './datetime.js';
 
-// 관람등급(age_rating: ALL / 12 / 15 / 19) → 관람 가능 최소 만 나이
+// 관람등급(age_rating: ALL / 12 / 15 / 18) → 관람 가능 최소 만 나이
 export function minAgeFor(rating) {
   return rating === 'ALL' ? 0 : Number(rating);
 }
@@ -9,7 +9,7 @@ export const RATING_LABEL = {
   ALL: '전체 관람가',
   12: '12세 이상 관람가',
   15: '15세 이상 관람가',
-  19: '청소년 관람불가',
+  18: '청소년 관람불가',
 };
 
 // 상영일 기준 만 나이
