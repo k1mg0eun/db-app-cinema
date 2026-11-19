@@ -232,12 +232,3 @@ export async function handle(method, path, body, token) {
   }
   fail(404, ERROR.NOT_FOUND, `목업에 없는 요청입니다: ${method} ${path}`);
 }
-
-export function simulateOtherBooking(scheduleId, seatId) {
-  if (db.tickets.some((t) => t.schedule_id === scheduleId && t.seat_id === seatId)) return;
-  const s = db.schedules.find((x) => x.schedule_id === scheduleId);
-  const rid = db.nextId.reservation++;
-  db.reservations.push({ reservation_id: rid, member_id: 99, schedule_id: scheduleId, reserved_at: toLocalDateTimeString(new Date()) });
-  db.tickets.push({ ticket_id: db.nextId.ticket++, reservation_id: rid, schedule_id: scheduleId, seat_id: seatId, price: s.price });
-  persist();
-}

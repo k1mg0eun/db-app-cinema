@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { api, isMock, simulateOtherBooking } from '../api/client.js';
+import { api } from '../api/client.js';
 import { ERROR } from '../api/errors.js';
 import { useAuth } from '../auth.jsx';
 import { checkAge } from '../lib/age.js';
@@ -222,13 +222,11 @@ export default function SeatSelect() {
 function PaymentModal({ schedule, seats, total, onClose, onSuccess, onConflict }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [simulate, setSimulate] = useState(false);
 
   async function confirm() {
     setBusy(true);
     setError('');
     try {
-      if (isMock && simulate) simulateOtherBooking(schedule.schedule_id, seats[0].seat_id);
       const reservation = await api.createReservation(
         schedule.schedule_id,
         seats.map((s) => s.seat_id),
@@ -269,12 +267,6 @@ function PaymentModal({ schedule, seats, total, onClose, onSuccess, onConflict }
         </div>
       </dl>
       <p className="muted small">실제 결제는 이루어지지 않습니다. 확인을 누르면 예매가 완료됩니다.</p>
-      {isMock && (
-        <label className="dev-toggle">
-          <input type="checkbox" checked={simulate} onChange={(e) => setSimulate(e.target.checked)} />
-          테스트: 다른 사람이 {seatLabel(seats[0])} 좌석을 먼저 예매한 상황 만들기
-        </label>
-      )}
       {error && (
         <p className="form-error" role="alert">
           {error}

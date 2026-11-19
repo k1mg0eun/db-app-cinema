@@ -989,22 +989,6 @@ table {
   color: var(--primary);
 }
 
-.dev-toggle {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  font-size: 0.8rem;
-  color: var(--sub);
-  border: 1px dashed var(--line-strong);
-  border-radius: 4px;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.dev-toggle input {
-  margin-top: 3px;
-}
-
 .modal-actions {
   display: grid;
   grid-template-columns: 1fr 2fr;
