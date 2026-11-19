@@ -53,6 +53,3 @@ export const api = {
   getMyReservations: () => request('GET', '/members/me/reservations'),
   cancelReservation: (id) => request('POST', `/reservations/${id}/cancel`),
 };
-
-// 목업 전용: "다른 사람이 먼저 예매한" 상황을 재현
-export const simulateOtherBooking = (scheduleId, seatId) => mock.simulateOtherBooking(scheduleId, seatId);
