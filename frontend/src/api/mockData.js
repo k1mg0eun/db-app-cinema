@@ -29,7 +29,7 @@ export const MOVIES = [
     movie_id: 3,
     title: '붉은 장막',
     running_time: 131,
-    age_rating: '19',
+    age_rating: '18',
     release_date: '2026-10-29',
     poster_url: '/posters/3.svg',
     description:
@@ -79,7 +79,7 @@ export function buildSeed(now = new Date()) {
       password: 'test1234',
       name: '이청소',
       phone: '010-9876-5432',
-      birth_date: '2012-05-20', // 2026년 11월 기준 만 14세 → 15·19 영화 예매 불가
+      birth_date: '2012-05-20', // 2026년 11월 기준 만 14세 → 15·18 영화 예매 불가
     },
     { member_id: 99, login_id: 'others', password: '', name: '다른 관객', phone: '', birth_date: '1990-01-01' },
   ];
