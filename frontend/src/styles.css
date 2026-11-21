@@ -12,7 +12,7 @@
   --r-all: #3a9c3f;
   --r-12: #f2b705;
   --r-15: #e9771c;
-  --r-18: #d7282d;
+  --r-19: #d7282d;
 
   --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
@@ -334,8 +334,8 @@ table {
   background: var(--r-15);
 }
 
-.rating-18 {
-  background: var(--r-18);
+.rating-19 {
+  background: var(--r-19);
 }
 
 /* ---------- 로그인 ---------- */
