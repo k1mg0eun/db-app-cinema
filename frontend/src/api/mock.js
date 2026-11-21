@@ -5,7 +5,7 @@ import { buildSeed } from './mockData.js';
 import { checkAge } from '../lib/age.js';
 import { parseDateTime, toLocalDateString, toLocalDateTimeString } from '../lib/datetime.js';
 
-const STORE_KEY = 'cinema.mock.v3'; // v3: 관람등급 19 → 18
+const STORE_KEY = 'cinema.mock.v4'; // v4: 관람등급 18 → 19 (백엔드 API 값에 맞춤)
 const LATENCY = 250;
 
 let db = load();

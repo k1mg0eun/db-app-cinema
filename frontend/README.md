@@ -30,7 +30,7 @@ VITE_API_BASE_URL=http://localhost:8080/api
 | 아이디 | 설명 |
 | --- | --- |
 | adult01 | 1999.03.14생. 모든 영화 예매 가능 |
-| teen01 | 2012.05.20생, 만 14세. 전체 관람가만 예매 가능하고 15세·18세 영화는 막힘 |
+| teen01 | 2012.05.20생, 만 14세. 전체 관람가만 예매 가능하고 15세·19세 영화는 막힘 |
 
 결제 확인 창의 "테스트: 다른 사람이 … 먼저 예매한 상황 만들기"를 체크하면 중복 예매 실패(409) 흐름을 확인할 수 있습니다. (목업 모드에서만 보임)
 
@@ -81,7 +81,7 @@ VITE_API_BASE_URL=http://localhost:8080/api
 { "movie_id": 1, "title": "...", "running_time": 108, "age_rating": "ALL", "release_date": "2026-10-22", "poster_url": "/posters/1.svg", "description": "..." }
 ```
 
-`age_rating`은 `ALL` / `12` / `15` / `18` 중 하나. `poster_url`이 null이면 제목으로 대체 포스터를 그립니다.
+`age_rating`은 `ALL` / `12` / `15` / `19` 중 하나. `poster_url`이 null이면 제목으로 대체 포스터를 그립니다.
 
 ### `GET /movies/{id}/schedules` — schedule + screen JOIN
 
@@ -93,7 +93,7 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 ```json
 {
-  "schedule": { "schedule_id": 11, "movie_id": 3, "movie_title": "붉은 장막", "age_rating": "18", "screen_id": 3, "screen_name": "IMAX관", "start_time": "...", "end_time": "...", "price": 18000 },
+  "schedule": { "schedule_id": 11, "movie_id": 3, "movie_title": "붉은 장막", "age_rating": "19", "screen_id": 3, "screen_name": "IMAX관", "start_time": "...", "end_time": "...", "price": 18000 },
   "seats": [{ "seat_id": 1, "seat_row": "A", "seat_col": 1, "reserved": false }]
 }
 ```
@@ -116,7 +116,7 @@ VITE_API_BASE_URL=http://localhost:8080/api
   "status": "CONFIRMED",
   "reserved_at": "...",
   "total_price": 36000,
-  "schedule": { "movie_title": "...", "age_rating": "18", "screen_name": "IMAX관", "start_time": "...", "end_time": "..." },
+  "schedule": { "movie_title": "...", "age_rating": "19", "screen_name": "IMAX관", "start_time": "...", "end_time": "..." },
   "tickets": [{ "seat_id": 1, "seat_row": "A", "seat_col": 1, "price": 18000, "status": "ACTIVE" }]
 }]
 ```
